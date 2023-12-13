@@ -1,0 +1,3 @@
+module DOWNLOAD_MANAGER
+
+go 1.21.4
