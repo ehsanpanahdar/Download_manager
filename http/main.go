@@ -1,11 +1,11 @@
 package http
 
 import (
-	"net/http"
-	"log"
-	"os"
 	"fmt"
 	"io"
+	"log"
+	"net/http"
+	"os"
 	"sync"
 )
 
@@ -15,10 +15,10 @@ const (
 
 type Worker_info struct {
 	Start_byte , End_byte int
-	URL , File_name string
+	URL string
 	WG *sync.WaitGroup
 	Worker_id int
-	File *os.File
+	File_fd *os.File
 }
 
 func Init_download(url string) int64 {
@@ -52,17 +52,17 @@ func Download_chunk( info Worker_info ) {
 		return
 	}
 
-	file_name := fmt.Sprintf( "%s-%d" , info.File_name , info.Worker_id )
-	file , err := os.Create(file_name)
+	buffer , err := io.ReadAll(resp.Body)
 	if( err != nil ) {
-		log.Printf( "Worker with ID %d was unable to create temp file:%s" , info.Worker_id , err.Error() ) 
+		log.Printf( "Worker with ID %d was unable to copy from response body to memory:%s" , info.Worker_id , err.Error() )
 		return
 	}
 
-	_ , err = io.Copy( file , resp.Body )
+	fmt.Println( "Start:" , info.Start_byte , "End:" , info.End_byte )
+	_ , err = info.File_fd.WriteAt( buffer , int64(info.Start_byte) )
 	if( err != nil ) {
-		log.Printf( "Worker with ID %d was unable to save data to temp file:%s" , info.Worker_id , err.Error() )
-		return
+		log.Printf( "Worker with ID %d was unable to copy data from memory to file:%s" , info.Worker_id , err.Error() )
+		return 
 	}
 
 	log.Printf( "Worker with ID %d finished successfuly" , info.Worker_id )
