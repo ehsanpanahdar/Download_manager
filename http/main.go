@@ -21,27 +21,33 @@ type Worker_info struct {
 	File_fd *os.File
 }
 
-func Init_download(url string) int64 {
-	client := http.Client{}
+func Init_download(url string) (int64 , bool) {
+	var client http.Client
 	resp , err := client.Head(url)
 	if( err != nil ) {
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
-	if( resp.StatusCode != 200 ) {
-		log.Printf( "HTTP HEAD request was unsuccessful with status code %d" , resp.StatusCode )
-		os.Exit(1)
+	// AR stands for Accept-Ranges
+	var Is_AR_supported bool
+	accept_ranges := resp.Header.Get("Accept-Ranges")
+	if( accept_ranges != "none" ) {
+		Is_AR_supported = true
+	} else {
+		Is_AR_supported = false
 	}
 
-	return resp.ContentLength
+	return resp.ContentLength , Is_AR_supported
 }
 
 func Download_chunk( info Worker_info ) {
-	defer info.WG.Done()
+	if( info.WG != nil ) {
+		defer info.WG.Done()
+	}
 
 	request , _ := http.NewRequest( "GET" , info.URL , nil )
-	range_bytes := fmt.Sprintf( "byte=%d-%d" , info.Start_byte , info.End_byte )
+	range_bytes := fmt.Sprintf( "bytes=%d-%d" , info.Start_byte , info.End_byte )
 	request.Header.Add( "Range" , range_bytes )
 	request.Header.Add( "User-Agent" , user_agent )
 
