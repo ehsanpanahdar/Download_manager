@@ -4,12 +4,17 @@ import (
 	"DOWNLOAD_MANAGER/http"
 	"DOWNLOAD_MANAGER/manager"
 	"DOWNLOAD_MANAGER/utils"
+	"fmt"
 	"log"
 	"path"
 )
 
 func main() {
-	const max_chunk_size  = 1024 * 1024  
+	iface := "enp4s0"
+	mtu_size := utils.Get_mtu(iface)
+	fmt.Println(mtu_size)
+	max_chunk_size := 1024 * mtu_size
+
 	url := utils.Get_url()
 	total_data_size , Is_AR_supported := http.Init_download(url) // AR stands for Accept-Ranges
 	file_name := path.Base(url)

@@ -64,7 +64,6 @@ func Download_chunk( info Worker_info ) {
 		return
 	}
 
-	fmt.Println( "Start:" , info.Start_byte , "End:" , info.End_byte )
 	_ , err = info.File_fd.WriteAt( buffer , int64(info.Start_byte) )
 	if( err != nil ) {
 		log.Printf( "Worker with ID %d was unable to copy data from memory to file:%s" , info.Worker_id , err.Error() )
